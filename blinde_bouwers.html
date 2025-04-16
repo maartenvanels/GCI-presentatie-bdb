@@ -1,0 +1,824 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+    <title>Blinde Bouwers - CGI Maarten van Els</title>
+
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reset.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/theme/simple.min.css" id="theme">
+
+    <!-- Theme used for syntax highlighted code -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/monokai.min.css">
+    <style>
+        /* Custom styles for timers */
+        .timer {
+            font-size: 4em;
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        
+        /* Timer urgency background colors */
+        .timer-section {
+            padding: 10px;
+            border-radius: 8px;
+            margin-bottom: 10px;
+            transition: background-color 0.5s ease;
+        }
+        
+        .urgency-low {
+            background-color: #4CAF50; /* Green */
+            color: white;
+        }
+        
+        .urgency-medium {
+            background-color: #FFEB3B; /* Yellow */
+            color: black;
+        }
+        
+        .urgency-high {
+            background-color: #FF9800; /* Orange */
+            color: white;
+        }
+        
+        .urgency-critical {
+            background-color: #F44336; /* Red */
+            color: white;
+        }
+        
+        /* Additional styling to make it look more professional */
+        :root {
+            --main-color: #005A9C; /* HAN blue */
+            --accent-color: #FF5733;
+            --light-color: #FFFFFF;
+            --dark-color: #333333;
+        }
+        
+        .reveal h1, .reveal h2, .reveal h3 {
+            color: var(--main-color);
+        }
+        html, body, .reveal, .slides {
+  height: 100% !important;
+  margin: 0;
+  padding: 0;
+}
+        
+        .reveal .slides {
+            border-radius: 5px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+        }
+        
+        .header-logo {
+            position: absolute;
+            top: 10px;
+            right: 10px;
+            height: 40px;
+        }
+        
+        .instruction-box {
+            background-color: rgba(0, 90, 156, 0.1);
+            border-left: 5px solid var(--main-color);
+            padding: 10px 15px;
+            border-radius: 0 5px 5px 0;
+            margin: 10px 0;
+        }
+        
+        .warning {
+            color: #d83030;
+            font-weight: bold;
+        }
+        
+        .time-notification {
+            font-size: 1.5em;
+            font-weight: bold;
+            margin-top: 15px;
+            opacity: 0;
+            transition: opacity 0.5s ease-in-out;
+        }
+        
+        .time-notification.warning {
+            color: #d83030;
+        }
+        
+        .time-notification.visible {
+            opacity: 1;
+        }
+        
+        /* Background color transitions for urgency - IMPROVED FULL SLIDE COLORING */
+        /* Target the actual slide element for full coloring */
+        .timer-section {
+            position: relative;
+            transition: background-color 1s ease-in-out !important;
+        }
+        
+        /* Force coloring of the entire slide */
+        .reveal .slides section.timer-section.urgent-low {
+            background-color: rgba(255, 193, 7, 0.2) !important; /* Light amber */
+        }
+        
+        .reveal .slides section.timer-section.urgent-medium {
+            background-color: rgba(255, 87, 51, 0.25) !important; /* Light orange */
+        }
+        
+        .reveal .slides section.timer-section.urgent-high {
+            background-color: rgba(216, 48, 48, 0.3) !important; /* Light red */
+        }
+        
+        .reveal .slides section.timer-section.urgent-critical {
+            background-color: rgba(216, 48, 48, 0.4) !important; /* Medium red */
+        }
+        
+        /* Pulsing effect for the last few seconds */
+        @keyframes pulse-background {
+            0% { background-color: rgba(216, 48, 48, 0.4) !important; }
+            50% { background-color: rgba(216, 48, 48, 0.6) !important; }
+            100% { background-color: rgba(216, 48, 48, 0.4) !important; }
+        }
+        
+        .reveal .slides section.timer-section.pulse {
+            animation: pulse-background 1s infinite;
+        }
+        
+        /* Opdracht afbeelding styling */
+        .opdracht-image {
+            max-width: 80%;
+            height: auto;
+            display: block;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+        }
+        
+        /* Sound button for testing */
+        .sound-test {
+            margin-top: 20px;
+            padding: 10px;
+            background: var(--main-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        .button-sound {
+            padding: 10px 15px;
+            background-color: #4CAF50;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            font-size: 16px;
+            cursor: pointer;
+            margin: 5px;
+            transition: background-color 0.3s;
+        }
+        .button-sound:hover {
+            background-color: #45a049;
+        }
+        
+        .reveal .slides section .row {
+            display: flex;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+        
+        .reveal .slides section .column {
+            flex: 1;
+            padding: 0 15px;
+            min-width: 250px;
+        }
+        
+        #sound-test {
+            margin-top: 20px;
+            padding: 10px 15px;
+            background-color: #2196F3;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        #sound-test:hover {
+            background-color: #0b7dda;
+        }
+    </style>
+</head>
+<body>
+    <div class="reveal">
+        <div class="slides">
+            <section>
+                <h1>Blinde Bouwers</h1>
+                <h3>CGI Maarten van Els </h3>
+                <p>
+                    <small>Een teambuilding activiteit voor groepen</small>
+                </p>
+            </section>
+            
+            <!-- Nieuwe sectie met de opdracht afbeelding -->
+            <section>
+                <h2>De Uitdaging</h2>
+                <img src="images/opdracht.png" alt="Blinde Bouwers Opdracht"
+     style="display: block; margin: 0 auto; width: 300px;">
+                <p><strong>Bouw samen de hoogste stabiele toren!</strong></p>
+            </section>
+
+            <section>
+                <h2>Team Up!</h2>
+                <p>Vorm tweetallen.</p>
+                <p class="fragment">(Bij oneven aantal: maak één team van drie)</p>
+                <div class="fragment instruction-box">
+                    <p>Team van drie: 1 Bouwer, 2 Coaches in Ronde 1</p>
+                    <p>Dan wisselen voor Ronde 2</p>
+                </div>
+            </section>
+
+            <section>
+                <h2>De Uitdaging</h2>
+                <p>Bouw de hoogste, <strong>stabiele</strong> toren van bekers, borden en tape!</p>
+                <ul>
+                    <li>1 'Bouwer' (geblinddoekt)</li>
+                    <li>1 'Coach' (alleen praten!)</li>
+                    <li>Ronde 1 + Ronde 2</li>
+                    <li>Prijs voor de hoogste toren na Ronde 2!</li>
+                </ul>
+                <p class="warning fragment">Coaches mogen de materialen NIET aanraken, alleen instructies geven!</p>
+            </section>
+
+            <section data-auto-animate data-auto-animate-id="timer-section" class="timer-section">
+                <h2>Tactiekbespreking</h2>
+                <p>Overleg kort (1.5 min) met je team:</p>
+                <ul>
+                    <li>Hoe begin je? Breed/smal?</li>
+                    <li>Communicatie? Codewoorden?</li>
+                    <li>Eerste stappen?</li>
+                </ul>
+                <div id="timer-tactics" class="timer fragment" data-timer-duration="90">01:30</div>
+                <div id="notification-tactics" class="time-notification"></div>
+            </section>
+
+             <section>
+                <h2>Klaar voor Ronde 1?</h2>
+                <p>1. Blinddoek om bij de 'Bouwer'.</p>
+                <p>2. Materiaal klaar.</p>
+                <p>3. Coaches: Alleen praten!</p>
+                <p>Tijd: 3 minuten en 30 seconden</p>
+            </section>
+
+            <section data-auto-animate data-auto-animate-id="timer-section" class="timer-section">
+                <h2>Ronde 1: Bouwen!</h2>
+                <p>Start!</p>
+                <div id="timer-round1" class="timer fragment" data-timer-duration="210">03:30</div>
+                <div id="notification-round1" class="time-notification"></div>
+            </section>
+
+            <section>
+                 <h2>Stop & Wissel!</h2>
+                 <p>Tijd is om voor Ronde 1!</p>
+                 <p>Wissel de blinddoek en de rollen.</p>
+                 <p>(Coach wordt Bouwer, Bouwer wordt Coach)</p>
+                 <p>Toren laten staan zoals hij is.</p>
+                 <div class="fragment instruction-box">
+                    <p>Bij team van drie: zorg dat iedereen een actieve rol heeft gehad aan het eind</p>
+                 </div>
+            </section>
+
+            <section data-auto-animate data-auto-animate-id="timer-section" class="timer-section">
+                <h2>Ronde 2: Bouwen!</h2>
+                <p>Start!</p>
+                <div id="timer-round2" class="timer fragment" data-timer-duration="210">03:30</div>
+                <div id="notification-round2" class="time-notification"></div>
+            </section>
+
+            <section>
+                 <h2>Einde!</h2>
+                 <p>Handen van de torens!</p>
+                 <p>Wie heeft de hoogste STABIELE toren?</p>
+                 <p class="fragment">(Tijd voor de prijsuitreiking!)</p>
+            </section>
+
+            <section>
+                <h2>Debrief & BDB Link</h2>
+                <p>Wat maakte dit (on)succesvol?</p>
+                <ul>
+                    <li class="fragment">B2: <strong>Duidelijke Instructie</strong> (Cruciaal?)</li>
+                    <li class="fragment">B6: <strong>Gerichte Feedback</strong> (Effectief?)</li>
+                    <li class="fragment">B5: <strong>Actief Verwerken</strong> (Learning by doing!)</li>
+                    <li class="fragment">B12: <strong>Veilig Leerklimaat</strong> (Vertrouwen?)</li>
+                </ul>
+                <p class="fragment"><small>+ Planning/Strategie, Communicatie...</small></p>
+            </section>
+
+             <section>
+                 <h2>Bedankt!</h2>
+            </section>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/reveal.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/notes/notes.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/markdown/markdown.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/reveal.js/4.3.1/plugin/highlight/highlight.min.js"></script>
+    <script>
+        // More info about initialization & config:
+        // - https://revealjs.com/initialization/
+        // - https://revealjs.com/config/
+        Reveal.initialize({
+            hash: true,
+            plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ],
+            // Make timers start when the fragment becomes visible
+            autoAnimate: true, // Important for data-auto-animate
+            controls: true,
+            progress: true,
+            center: true,
+            transition: 'slide'
+        });
+
+        // Global variables
+        let timers = {};
+        let tickIntervals = {};
+        let tickSound;
+        let sirenSound; // Added for the final siren sound
+        let soundsInitialized = false;
+        let currentlyPlayingSound = null; // Track currently playing sound
+        
+        // Function to stop any playing sounds
+        function stopAllSounds() {
+            if (tickSound) {
+                tickSound.pause();
+                tickSound.currentTime = 0;
+            }
+            if (sirenSound) {
+                sirenSound.pause();
+                sirenSound.currentTime = 0;
+            }
+            // Clear any tick intervals to prevent future sounds
+            Object.keys(tickIntervals).forEach(key => {
+                clearInterval(tickIntervals[key]);
+                delete tickIntervals[key];
+            });
+        }
+        
+        // Function to initialize sounds (needs user interaction)
+        function initializeSound() {
+            if (soundsInitialized) return; // Prevent multiple initializations
+            try {
+                console.log("Initializing sounds...");
+                // Using local audio files instead of external URLs
+                tickSound = new Audio('audio/clock.mp3'); 
+                sirenSound = new Audio('audio/alarm.mp3');
+                
+                // Try to load the sounds
+                Promise.all([
+                    new Promise((resolve, reject) => {
+                        tickSound.load();
+                        tickSound.addEventListener('canplaythrough', resolve, { once: true });
+                        tickSound.addEventListener('error', reject, { once: true });
+                    }),
+                    new Promise((resolve, reject) => {
+                        sirenSound.load();
+                        sirenSound.addEventListener('canplaythrough', resolve, { once: true });
+                        sirenSound.addEventListener('error', reject, { once: true });
+                    })
+                ]).then(() => {
+                    console.log("Tick and Alarm sounds loaded successfully.");
+                    soundsInitialized = true;
+                    // Small notification instead of alert to be less obtrusive
+                    const notification = document.createElement('div');
+                    notification.textContent = 'Geluiden geactiveerd ✓';
+                    notification.style.position = 'fixed';
+                    notification.style.top = '10px';
+                    notification.style.right = '10px';
+                    notification.style.backgroundColor = 'rgba(76, 175, 80, 0.9)';
+                    notification.style.color = 'white';
+                    notification.style.padding = '8px 15px';
+                    notification.style.borderRadius = '4px';
+                    notification.style.zIndex = '1000';
+                    notification.style.fontSize = '14px';
+                    document.body.appendChild(notification);
+                    setTimeout(() => {
+                        notification.style.opacity = '0';
+                        notification.style.transition = 'opacity 0.5s ease';
+                        setTimeout(() => notification.remove(), 500);
+                    }, 3000);
+                }).catch(error => {
+                    console.error("Error loading sounds:", error);
+                    // Not showing an alert to avoid disruption
+                    console.warn("Kon geluiden niet laden. Controleer audio bestanden.");
+                });
+
+            } catch (err) {
+                console.error("Failed to initialize sounds:", err);
+                // Not showing an alert to avoid disruption
+            }
+        }
+        
+        // Function to update background color based on time remaining
+        function updateTimerSectionColor(timerElement, totalSeconds, remainingSeconds) {
+            const section = timerElement.closest('.timer-section');
+            if (!section) return;
+            
+            // Remove all existing urgency classes
+            section.classList.remove('urgency-low', 'urgency-medium', 'urgency-high', 'urgency-critical');
+            
+            // Calculate percentage of time remaining
+            const percentRemaining = (remainingSeconds / totalSeconds) * 100;
+            
+            // Apply appropriate urgency class
+            if (percentRemaining > 75) {
+                section.classList.add('urgency-low');
+            } else if (percentRemaining > 50) {
+                section.classList.add('urgency-medium');
+            } else if (percentRemaining > 25) {
+                section.classList.add('urgency-high');
+            } else {
+                section.classList.add('urgency-critical');
+            }
+        }
+
+        // --- Timer Logic ---
+        let notificationStates = {}; // Track notifications already shown
+
+        function showTimeNotification(notificationElementId, message, isWarning = false) {
+            const notificationElement = document.getElementById(notificationElementId);
+            if (!notificationElement) return;
+            
+            notificationElement.textContent = message;
+            notificationElement.classList.add('visible');
+            
+            if (isWarning) {
+                notificationElement.classList.add('warning');
+            } else {
+                notificationElement.classList.remove('warning');
+            }
+            
+            // Auto-hide after 4 seconds
+            setTimeout(() => {
+                notificationElement.classList.remove('visible');
+            }, 4000);
+        }
+        
+        // Function to get the current slide section
+        function getCurrentTimerSection() {
+            const currentSlide = Reveal.getCurrentSlide();
+            if (currentSlide && currentSlide.classList.contains('timer-section')) {
+                return currentSlide;
+            }
+            return null;
+        }
+        
+        // Function to update background color based on remaining time for slides
+        function updateSlideBackground(section, remainingTime, totalTime) {
+            if (!section) return;
+            
+            // Reset any previous classes
+            section.classList.remove('urgent-low', 'urgent-medium', 'urgent-high', 'urgent-critical', 'pulse');
+            
+            const percentage = remainingTime / totalTime;
+            
+            if (remainingTime <= 10) {
+                // Last 10 seconds - pulsing effect
+                section.classList.add('pulse');
+            } else if (remainingTime <= 30) {
+                // Last 30 seconds - high urgency
+                section.classList.add('urgent-critical');
+            } else if (remainingTime <= 60) {
+                // Last minute - medium urgency
+                section.classList.add('urgent-high');
+            } else if (remainingTime <= 90) {
+                // Last 1.5 minutes - low urgency
+                section.classList.add('urgent-medium');
+            } else if (remainingTime <= 120) {
+                // Last 2 minutes - very low urgency
+                section.classList.add('urgent-low');
+            }
+        }
+        
+        // Start the tick sound at 10 seconds
+        function playTickSound() {
+            if (!soundsInitialized || !tickSound) {
+                console.log("Tick sound not ready or not initialized.");
+                return;
+            }
+            
+            console.log("Playing tick sound");
+            
+            // Play the tick sound just once - it should last for 10 seconds
+            try {
+                tickSound.currentTime = 0;
+                tickSound.play().catch(e => console.error("Tick sound playback failed:", e));
+            } catch (e) {
+                console.error("Error playing tick sound:", e);
+            }
+        }
+
+        // For presentation slides timer
+        function startTimer(duration, displayElementId, notificationElementId) {
+            // Clear any existing timer for this element
+            if (timers[displayElementId]) {
+                clearInterval(timers[displayElementId]);
+            }
+            
+            // Clear any existing tick interval
+            if (tickIntervals[displayElementId]) {
+                clearInterval(tickIntervals[displayElementId]);
+                delete tickIntervals[displayElementId];
+            }
+            
+            // Reset notification states
+            notificationStates[notificationElementId] = {
+                twoMinutes: false,
+                oneMinute: false,
+                thirtySeconds: false,
+                tenSeconds: false
+            };
+
+            let timer = duration;
+            const totalDuration = duration; // Store for percentage calculations
+            let minutes, seconds;
+            const display = document.getElementById(displayElementId);
+            if (!display) return; // Exit if element not found
+
+            display.classList.remove('timer-done'); // Reset style
+            
+            // Reset section styling
+            const timerSection = getCurrentTimerSection();
+            if (timerSection) {
+                timerSection.classList.remove('urgent-low', 'urgent-medium', 'urgent-high', 'urgent-critical', 'pulse');
+            }
+
+            timers[displayElementId] = setInterval(function () {
+                minutes = parseInt(timer / 60, 10);
+                seconds = parseInt(timer % 60, 10);
+
+                minutes = minutes < 10 ? "0" + minutes : minutes;
+                seconds = seconds < 10 ? "0" + seconds : seconds;
+
+                display.textContent = minutes + ":" + seconds;
+                
+                // Update background color based on remaining time
+                updateSlideBackground(getCurrentTimerSection(), timer, totalDuration);
+                
+                // Change color based on time remaining
+                if (timer <= 30) {
+                    display.style.color = '#d83030'; // Red for last 30 seconds
+                } else if (timer <= 60) {
+                    display.style.color = '#FFC107'; // Yellow/amber for last minute
+                } else {
+                    display.style.color = '#FF5733'; // Default orange-ish
+                }
+                
+                // Show automatic time notifications
+                if (timer === 120 && !notificationStates[notificationElementId].twoMinutes) {
+                    showTimeNotification(notificationElementId, "Nog 2 minuten!");
+                    notificationStates[notificationElementId].twoMinutes = true;
+                } else if (timer === 60 && !notificationStates[notificationElementId].oneMinute) {
+                    showTimeNotification(notificationElementId, "Nog 1 minuut!");
+                    notificationStates[notificationElementId].oneMinute = true;
+                } else if (timer === 30 && !notificationStates[notificationElementId].thirtySeconds) {
+                    showTimeNotification(notificationElementId, "Nog 30 seconden!", true);
+                    notificationStates[notificationElementId].thirtySeconds = true;
+                    // Just play the tick sound once
+                    playTickSound();
+                } else if (timer === 10 && !notificationStates[notificationElementId].tenSeconds) {
+                    showTimeNotification(notificationElementId, "Nog 10 seconden!", true);
+                    notificationStates[notificationElementId].tenSeconds = true;
+                    // Just play the tick sound once
+                    playTickSound();
+                }
+
+                if (--timer < 0) {
+                    clearInterval(timers[displayElementId]);
+                    display.textContent = "00:00 - Tijd is om!";
+                    display.classList.add('timer-done'); // Add finished style
+                    
+                    // Clean up any remaining tick intervals
+                    if (tickIntervals[displayElementId]) {
+                        clearInterval(tickIntervals[displayElementId]);
+                        delete tickIntervals[displayElementId];
+                    }
+                    
+                    // Play siren sound when timer finishes
+                    if (soundsInitialized && sirenSound) {
+                        try {
+                            sirenSound.currentTime = 0;
+                            sirenSound.play().catch(e => console.error("Siren sound failed:", e));
+                        } catch (e) {
+                            console.error("Audio playback failed:", e);
+                        }
+                    }
+                    
+                    // Show final notification
+                    showTimeNotification(notificationElementId, "Tijd is om!", true);
+                    
+                    // Reset the background after a short delay
+                    setTimeout(() => {
+                        const section = getCurrentTimerSection();
+                        if (section) {
+                            section.classList.remove('urgent-low', 'urgent-medium', 'urgent-high', 'urgent-critical', 'pulse');
+                        }
+                    }, 3000);
+
+                    // Play tick sounds in last 10 seconds
+                    if (soundsInitialized && totalSeconds === 10) {
+                        playTickSound();
+                    }
+                }
+            }, 1000);
+        }
+
+        // --- Reveal.js Event Listeners ---
+        
+        // Initialize sounds on first interaction with the page
+        document.addEventListener('click', function() {
+            initializeSound();
+        }, { once: true });
+        
+        Reveal.addEventListener('fragmentshown', function(event) {
+            // Check if the shown fragment is a timer element
+            if (event.fragment.matches('.timer') && event.fragment.id) {
+                const duration = parseInt(event.fragment.getAttribute('data-timer-duration'), 10);
+                const timerId = event.fragment.id;
+                const notificationId = timerId.replace('timer-', 'notification-');
+                
+                if (!isNaN(duration)) {
+                    startTimer(duration, timerId, notificationId);
+                }
+            }
+        });
+
+         // Optional: Stop timers when navigating away from the slide they are on
+        Reveal.addEventListener('slidechanged', function(event) {
+           // Stop any playing sounds when changing slides
+           stopAllSounds();
+           
+           // Find timers on the *previous* slide and clear them if needed
+           if (event.previousSlide) {
+               const oldTimers = event.previousSlide.querySelectorAll('.timer');
+               oldTimers.forEach(timerEl => {
+                   if (timers[timerEl.id]) {
+                      // Clear the interval when changing slides
+                      clearInterval(timers[timerEl.id]);
+                      delete timers[timerEl.id];
+                   }
+                    
+                   // Also clear any tick intervals
+                   if (tickIntervals[timerEl.id]) {
+                      clearInterval(tickIntervals[timerEl.id]);
+                      delete tickIntervals[timerEl.id];
+                   }
+                });
+                
+                // Reset previous slide background
+                if (event.previousSlide.classList.contains('timer-section')) {
+                    event.previousSlide.classList.remove('urgent-low', 'urgent-medium', 'urgent-high', 'urgent-critical', 'pulse');
+                }
+            }
+           // Reset timers on the *current* slide if they haven't started (e.g., going back)
+            if (event.currentSlide) {
+                const currentTimers = event.currentSlide.querySelectorAll('.timer');
+                currentTimers.forEach(timerEl => {
+                    // Check if timer is not running or already done
+                    if (!timers[timerEl.id] || timerEl.classList.contains('timer-done')) {
+                         const duration = parseInt(timerEl.getAttribute('data-timer-duration'), 10);
+                         if (!isNaN(duration)) {
+                             let minutes = parseInt(duration / 60, 10);
+                             let seconds = parseInt(duration % 60, 10);
+                             minutes = minutes < 10 ? "0" + minutes : minutes;
+                             seconds = seconds < 10 ? "0" + seconds : seconds;
+                             timerEl.textContent = minutes + ":" + seconds;
+                             timerEl.classList.remove('timer-done');
+                         }
+                    }
+                 });
+                  
+                 // Reset current slide background if needed
+                 if (event.currentSlide.classList.contains('timer-section') && 
+                     !event.currentSlide.querySelector('.timer.timer-done')) {
+                     event.currentSlide.classList.remove('urgent-low', 'urgent-medium', 'urgent-high', 'urgent-critical', 'pulse');
+                 }
+            }
+        });
+        
+        // Function for timer on the tijden slide
+        function startPhaseTimer(id, minutes) {
+            if (timers[id]) {
+                clearInterval(timers[id]);
+            }
+            
+            // Note: Sound initialization is tied to the main presentation interaction
+            // Ensure sounds are initialized before starting this timer if needed.
+            
+            const timerElement = document.getElementById(`timer${id}`);
+            const timerSection = document.getElementById(`timer${id}-section`);
+            let totalSeconds = minutes * 60;
+            
+            // Update display with initial time
+            const mins = Math.floor(totalSeconds / 60);
+            const secs = totalSeconds % 60;
+            timerElement.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            
+            // Set initial urgency
+            timerSection.classList.remove('urgency-low', 'urgency-medium', 'urgency-high', 'urgency-critical');
+            timerSection.classList.add('urgency-low');
+            
+            timers[id] = setInterval(() => {
+                totalSeconds--;
+                
+                if (totalSeconds <= 0) {
+                    clearInterval(timers[id]);
+                    timerElement.textContent = "0:00";
+                    timerSection.classList.remove('urgency-low', 'urgency-medium', 'urgency-high');
+                    timerSection.classList.add('urgency-critical');
+                    
+                    // Play siren sound
+                    if (soundsInitialized && sirenSound) {
+                         try {
+                            sirenSound.currentTime = 0;
+                            sirenSound.play().catch(e => console.error("Siren sound failed:", e));
+                        } catch (e) {
+                            console.error("Audio playback failed:", e);
+                        }
+                    }
+                } else {
+                    // Update display
+                    const mins = Math.floor(totalSeconds / 60);
+                    const secs = totalSeconds % 60;
+                    timerElement.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+                    
+                    // Update urgency
+                    const percentage = totalSeconds / (minutes * 60);
+                    timerSection.classList.remove('urgency-low', 'urgency-medium', 'urgency-high', 'urgency-critical');
+                    
+                    if (percentage > 0.66) {
+                        timerSection.classList.add('urgency-low');
+                    } else if (percentage > 0.33) {
+                        timerSection.classList.add('urgency-medium');
+                    } else if (percentage > 0.15) {
+                        timerSection.classList.add('urgency-high');
+                    } else {
+                        timerSection.classList.add('urgency-critical');
+                    }
+                    
+                    // Play tick sounds in last 10 seconds
+                    if (soundsInitialized && totalSeconds <= 10 && totalSeconds > 0) {
+                        // Using a simple play here, not the interval method used in startTickSounds
+                        // You might want to adapt startTickSounds or create a similar function if needed
+                        try {
+                           tickSound.currentTime = 0;
+                           tickSound.play().catch(e => console.error("Tick sound playback failed:", e));
+                        } catch (e) {
+                            console.error("Error playing tick sound in phase timer:", e);
+                        }
+                    }
+                }
+            }, 1000);
+        }
+        
+        function resetTimer(id) {
+            if (timers[id]) {
+                clearInterval(timers[id]);
+                timers[id] = null;
+            }
+            
+            const timerNumber = parseInt(id);
+            let minutes;
+            
+            switch (timerNumber) {
+                case 1: minutes = 5; break;
+                case 2: minutes = 2; break;
+                case 3: minutes = 10; break;
+                case 4: minutes = 4; break;
+                default: minutes = 5;
+            }
+            
+            const timerElement = document.getElementById(`timer${id}`);
+            const timerSection = document.getElementById(`timer${id}-section`);
+            
+            // Add null checks here to prevent the TypeError
+            if (timerElement) {
+                // Update display with initial time
+                const mins = Math.floor(minutes * 60 / 60);
+                const secs = (minutes * 60) % 60;
+                timerElement.textContent = `${mins}:${secs < 10 ? '0' : ''}${secs}`;
+            }
+            
+            if (timerSection) {
+                 // Reset urgency
+                timerSection.classList.remove('urgency-low', 'urgency-medium', 'urgency-high', 'urgency-critical');
+                timerSection.classList.add('urgency-low');
+            }
+        }
+        
+        // Initialize timers on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            resetTimer(1);
+            resetTimer(2);
+            resetTimer(3);
+            resetTimer(4);
+        });
+    </script>
+</body>
+</html> 
