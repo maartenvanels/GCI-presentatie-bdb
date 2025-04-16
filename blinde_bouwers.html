@@ -581,8 +581,7 @@
                     showTimeNotification(notificationElementId, "Nog 30 seconden!", true);
                     notificationStates[notificationElementId].thirtySeconds = true;
                     // Just play the tick sound once
-                    playTickSound();
-                } else if (timer === 10 && !notificationStates[notificationElementId].tenSeconds) {
+                } else if (timer === 9 && !notificationStates[notificationElementId].tenSeconds) {
                     showTimeNotification(notificationElementId, "Nog 10 seconden!", true);
                     notificationStates[notificationElementId].tenSeconds = true;
                     // Just play the tick sound once
